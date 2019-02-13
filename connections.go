@@ -22,8 +22,6 @@ func Connect(u string) (net.Conn, error) {
 
 	dialable := fmt.Sprintf("%s:%s", target.Hostname(), port)
 
-	logger.Debug("Attempting to dial: ", dialable)
-
 	if target.Scheme == "http" {
 		return net.Dial("tcp", dialable)
 	}
@@ -32,5 +30,5 @@ func Connect(u string) (net.Conn, error) {
 		return tls.Dial("tcp", dialable, &tls.Config{InsecureSkipVerify: true})
 	}
 
-	return nil, errors.New("Unable to create valid connection")
+	return nil, errors.New("Unable to create valid HTTP(S) connection")
 }

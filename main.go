@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"net/url"
+	"math/rand"
+	"time"
 )
 
 
@@ -20,7 +22,7 @@ func Die(print ...interface{}) {
 
 func AssertValidUrl(u string) {
 	p, err := url.Parse(u)
-	fmt.Println(u)
+	fmt.Println(p.RawPath)
 	if err != nil {
 		Die("Invalid URL provided", err)
 	}
@@ -49,6 +51,7 @@ var opts struct {
 var logger = logging.MustGetLogger("pewnit")
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	args := os.Args[1:]
 	_, err := flags.ParseArgs(&opts, args)
 
@@ -73,8 +76,8 @@ func main() {
 		Die()
 	}
 
-	AssertValidUrl(opts.PositionalArgs.URL);
+	AssertValidUrl(opts.PositionalArgs.URL)
 
-	engine := NewEngine(opts.Concurrency)
-	engine.Attack(opts.PositionalArgs.URL)
+	engine := NewEngine(opts.PositionalArgs.URL, opts.Concurrency)
+	engine.Attack()
 }
