@@ -68,7 +68,7 @@ func main() {
 		logFormatter, _ = logging.NewStringFormatter(format)
 	}
 	
-	logging.SetLevel(logging.DEBUG, "pewnit")
+	logging.SetLevel(logging.ERROR, "pewnit")
 	logging.SetFormatter(logFormatter)
 
 	if opts.PositionalArgs.URL == "" {
