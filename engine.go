@@ -148,7 +148,8 @@ func (ctx* Engine) report() {
 	// successConnections uint
 	// interruptedConnections uint
 
-	fmt.Printf("Report:\n\tWorkers: %d\n\tAttempted conns: %d\n\tFailed conns: %d\n\tSuccess conns: %d\n\tInterrupted conns: %d\n",
+	fmt.Printf("Report %d:\n Workers: %d\n\tAttempted conns: %d\n\tFailed conns: %d\n\tSuccess conns: %d\n\tInterrupted conns: %d\n",
+		time.Unix(),
 		ctx.activeWorkers,
 		ctx.attemptedConnections,
 		ctx.failedConnections,

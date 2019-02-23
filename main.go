@@ -30,7 +30,7 @@ func AssertValidUrl(u string) {
 	if p.Scheme == "" {
 		Die("Url is not fully qualified, provide scheme")
 	}
-
+	
 	if p.Host == "" {
 		Die("Url is not fully qualified, provide host name")
 	}
