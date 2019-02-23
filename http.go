@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"container/list"
+	"fmt"
 	"math/rand"
 	"net/url"
 	"strings"
@@ -13,7 +13,7 @@ func CreateRequest(u string) string {
 
 	req := list.New()
 
-	bld := strings.Builder {}
+	bld := strings.Builder{}
 
 	port := target.Port()
 	path := target.EscapedPath()
@@ -51,11 +51,11 @@ func CreateRequest(u string) string {
 		bld.WriteString("\r\n")
 	}
 	bld.WriteString("\r\n")
-	
+
 	return bld.String()
 }
 
-var accepts = [...]string {
+var accepts = [...]string{
 	"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
 	"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 	"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -65,7 +65,7 @@ var accepts = [...]string {
 	"text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/webp, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1",
 }
 
-var uas = [...]string {
+var uas = [...]string{
 	"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1",
 	"Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
 	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10; rv:33.0) Gecko/20100101 Firefox/33.0",
@@ -101,7 +101,7 @@ var uas = [...]string {
 	"Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:15.0) Gecko/20100101 Firefox/15.0.1",
 	"Mozilla/5.0 (Windows; U; Windows NT 5.1; rv:15.0) Gecko/20121011 Firefox/15.0.1",
 	"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:14.0) Gecko/20120405 Firefox/14.0a1",
-	
+
 	"Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.16) Gecko/20120421 Firefox/11.0",
 	"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko Firefox/11.0",
 	"Mozilla/5.0 (Windows NT 6.1; U;WOW64; de;rv:11.0) Gecko Firefox/11.0",
@@ -171,5 +171,4 @@ var uas = [...]string {
 	"Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.1; SV1; .NET CLR 2.8.52393; WOW64; en-US)",
 	"Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0; chromeframe/11.0.696.57)",
 	"Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/4.0; GTB7.4; InfoPath.3; SV1; .NET CLR 3.1.76908; WOW64; en-US)",
-	
 }

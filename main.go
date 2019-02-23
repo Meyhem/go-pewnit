@@ -1,28 +1,27 @@
 package main
 
 import (
+	"fmt"
+	"math/rand"
+	"net/url"
+	"os"
+	"time"
+
 	"github.com/jessevdk/go-flags"
 	"github.com/op/go-logging"
-	"fmt"
-	"os"
-	"net/url"
-	"math/rand"
-	"time"
 )
-
-
 
 func Die(print ...interface{}) {
 	for _, p := range print {
 		fmt.Println(p)
 	}
-	
+
 	os.Exit(1)
 }
 
 func AssertValidUrl(u string) {
 	p, err := url.Parse(u)
-	fmt.Println(p.RawPath)
+
 	if err != nil {
 		Die("Invalid URL provided", err)
 	}
@@ -30,7 +29,7 @@ func AssertValidUrl(u string) {
 	if p.Scheme == "" {
 		Die("Url is not fully qualified, provide scheme")
 	}
-	
+
 	if p.Host == "" {
 		Die("Url is not fully qualified, provide host name")
 	}
@@ -40,6 +39,8 @@ var opts struct {
 	Verbose []bool `short:"v" long:"verbose" description:"Log verbosity"`
 
 	Concurrency uint `short:"c" long:"concurrency" default:"5" description:"Number of concurrent attacks"`
+
+	AttackType string `short:"a" long:"attack" required:"true" description:"Specifies type of attack to execute" choice:"connectionflood" choice:"slowloris" choice:"httpflood"`
 
 	Porcelaine bool `long:"porcelaine" description:"Script friendly output"`
 
@@ -67,7 +68,7 @@ func main() {
 	} else {
 		logFormatter, _ = logging.NewStringFormatter(format)
 	}
-	
+
 	logging.SetLevel(logging.ERROR, "pewnit")
 	logging.SetFormatter(logFormatter)
 
@@ -78,6 +79,6 @@ func main() {
 
 	AssertValidUrl(opts.PositionalArgs.URL)
 
-	engine := NewEngine(opts.PositionalArgs.URL, opts.Concurrency)
+	engine := NewEngine(opts.PositionalArgs.URL, opts.Concurrency, opts.AttackType)
 	engine.Attack()
 }
