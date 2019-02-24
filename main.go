@@ -36,11 +36,17 @@ func AssertValidUrl(u string) {
 }
 
 var opts struct {
-	Verbose []bool `short:"v" long:"verbose" description:"Log verbosity"`
+	LogLevel string `short:"l" long:"loglevel" description:"Sets log level" choice:"DEBUG" choice:"INFO" choice:"NOTICE" choice:"WARNING" choice:"ERROR" choice:"CRITICAL"`
 
-	Concurrency uint `short:"c" long:"concurrency" default:"5" description:"Number of concurrent attacks"`
+	Concurrency uint `short:"c" long:"concurrency" default:"200" description:"Number of concurrent attacks"`
 
 	AttackType string `short:"a" long:"attack" required:"true" description:"Specifies type of attack to execute" choice:"connectionflood" choice:"slowloris" choice:"httpflood"`
+
+	Method string `short:"m" long:"method" default:"GET" description:"HTTP method to send to target server" choice:"GET" choice:"POST" choice:"PUT" choice:"DELETE" choice:"PATCH" choice:"HEAD" choice:"TRACE" choice:"CONNECT"`
+
+	Body string `short:"b" long:"body" description:"Custom body to provide with request. Only applicable on valid method combinations (not GET, HEAD, TRACE). Must be correctly encoded by user and user must provide corresponding Content-Type header. Content-Length is provided automatically."`
+
+	Header []string `long:"header" description:"Additional header to send. Option can be provided multiple times"`
 
 	Porcelaine bool `long:"porcelaine" description:"Script friendly output"`
 
@@ -69,7 +75,26 @@ func main() {
 		logFormatter, _ = logging.NewStringFormatter(format)
 	}
 
-	logging.SetLevel(logging.ERROR, "pewnit")
+	logLevel := logging.WARNING
+
+	switch opts.LogLevel {
+	case "DEBUG":
+		logLevel = logging.DEBUG
+	case "INFO":
+		logLevel = logging.INFO
+	case "NOTICE":
+		logLevel = logging.NOTICE
+	case "WARNING":
+		logLevel = logging.WARNING
+	case "ERROR":
+		logLevel = logging.ERROR
+	case "CRITICAL":
+		logLevel = logging.CRITICAL
+	default:
+		logLevel = logging.WARNING
+	}
+
+	logging.SetLevel(logLevel, "pewnit")
 	logging.SetFormatter(logFormatter)
 
 	if opts.PositionalArgs.URL == "" {
@@ -77,8 +102,12 @@ func main() {
 		Die()
 	}
 
+	if opts.Body != "" && (opts.Method == "GET" || opts.Method == "HEAD" || opts.Method == "TRACE") {
+		logger.Warning("Using body data with GET, HEAD, TRACE methods is not valid HTTP. THis might diminish the attack.")
+	}
+
 	AssertValidUrl(opts.PositionalArgs.URL)
 
-	engine := NewEngine(opts.PositionalArgs.URL, opts.Concurrency, opts.AttackType)
+	engine := NewEngine(opts.PositionalArgs.URL, opts.Concurrency, opts.AttackType, opts.Method, opts.Body, opts.Header)
 	engine.Attack()
 }

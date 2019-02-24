@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func CreateRequest(u string) string {
+func CreateRequest(u string, method string, body string, headers []string) string {
 	target, _ := url.Parse(u)
 
 	req := list.New()
@@ -27,9 +27,15 @@ func CreateRequest(u string) string {
 		host = fmt.Sprintf("%s:%s", host, port)
 	}
 
-	bld.Grow(300)
+	method = strings.ToUpper(method)
 
-	req.PushBack(fmt.Sprintf("GET %s HTTP/1.1", path))
+	if method == "" {
+		method = "GET"
+	}
+
+	bld.Grow(500)
+
+	req.PushBack(fmt.Sprintf("%s %s HTTP/1.1", method, path))
 	req.PushBack(fmt.Sprintf("Host: %s", host))
 	req.PushBack(fmt.Sprintf("User-Agent: %s", uas[rand.Intn(len(uas))]))
 	req.PushBack(fmt.Sprintf("Accept: %s", accepts[rand.Intn(len(accepts))]))
@@ -39,9 +45,18 @@ func CreateRequest(u string) string {
 	req.PushBack(fmt.Sprintf("Connection: keep-alive"))
 	// req.PushBack(fmt.Sprintf("Origin: %s", u))
 
+	for _, hdr := range headers {
+		req.PushBack(fmt.Sprintf(hdr))
+	}
+
+	if body != "" {
+		req.PushBack(fmt.Sprintf("Content-Length: %d", len(body)))
+	}
+
 	if Chance(0.1) {
 		req.PushBack(fmt.Sprintf("X-Requested-With: XMLHttpRequest"))
 	}
+
 	if Chance(0.3) {
 		req.PushBack(fmt.Sprintf("DNT: 1"))
 	}
@@ -50,9 +65,16 @@ func CreateRequest(u string) string {
 		bld.WriteString(i.Value.(string))
 		bld.WriteString("\r\n")
 	}
+
 	bld.WriteString("\r\n")
 
-	return bld.String()
+	bld.WriteString(body)
+
+	ret := bld.String()
+
+	logger.Infof("Forged request:\n%s", ret)
+
+	return ret
 }
 
 var accepts = [...]string{
